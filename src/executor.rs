@@ -14,6 +14,7 @@ pub struct ThreadPoolExecutor {
 
 impl ThreadPoolExecutor {
     pub fn new() -> Self {
+        // TODO: capacity should calculate from the number of cpus
         Self::with_capacity(16)
     }
 
@@ -26,7 +27,6 @@ impl ThreadPoolExecutor {
         let mut workers = Vec::<Worker>::with_capacity(capacity);
 
         for i in 0..capacity {
-            // TODO: remove magic number
             workers.push(spawn_worker(i, Arc::clone(&receiver)));
         }
 
