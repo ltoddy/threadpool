@@ -4,14 +4,15 @@ use std::sync::{
 };
 
 use super::Message;
+use crate::worker::spawn_worker;
 use crate::worker::Worker;
 
-pub struct ThreadPool {
+pub struct ThreadPoolExecutor {
     workers: Vec<Worker>,
     sender: SyncSender<Message>,
 }
 
-impl ThreadPool {
+impl ThreadPoolExecutor {
     pub fn new() -> Self {
         Self::with_capacity(16)
     }
@@ -26,13 +27,13 @@ impl ThreadPool {
 
         for i in 0..capacity {
             // TODO: remove magic number
-            workers.push(Worker::new(i, 4, Arc::clone(&receiver)));
+            workers.push(spawn_worker(i, Arc::clone(&receiver)));
         }
 
         Self { workers, sender }
     }
 
-    pub fn execute<F>(&self, f: F)
+    pub fn submit<F>(&self, f: F)
     where
         F: FnOnce() + Send + 'static,
     {
@@ -42,16 +43,22 @@ impl ThreadPool {
     }
 }
 
-impl Default for ThreadPool {
+impl Default for ThreadPoolExecutor {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl Drop for ThreadPool {
+impl Drop for ThreadPoolExecutor {
     fn drop(&mut self) {
         for _ in 0..self.workers.len() {
             self.sender.send(Message::Terminate).unwrap();
+        }
+
+        for worker in &mut self.workers {
+            if let Some(thread) = worker.thread.take() {
+                thread.join().unwrap();
+            }
         }
     }
 }
