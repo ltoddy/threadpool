@@ -4,7 +4,7 @@ use std::sync::{
 };
 use std::thread;
 
-use super::Message;
+use crate::Message;
 
 pub(crate) struct Worker {
     pub(crate) _id: usize,

@@ -3,7 +3,7 @@ use std::sync::{
     {Arc, Mutex},
 };
 
-use super::Message;
+use crate::Message;
 use crate::worker::spawn_worker;
 use crate::worker::Worker;
 
